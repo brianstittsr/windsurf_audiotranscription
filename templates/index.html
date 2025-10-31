@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Transcription Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background-color: #f0f2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #ddd;
+            margin-bottom: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            color: #667eea;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .status-message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .file-info {
+            display: none;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .download-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9ff;
+            border-radius: 15px;
+        }
+
+        .supported-formats {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .supported-formats h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .format-list {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .format-tag {
+            background-color: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Audio Transcription</h1>
+        <p class="subtitle">Upload your audio file and get an accurate text transcription with timestamps</p>
+        <a href="/pricing" class="btn" style="position: absolute; top: 20px; right: 20px; background: none; color: #fff; border: 1px solid #fff; padding: 10px 20px;">Pricing</a>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Click to select or drag & drop your audio file</div>
+            <div class="upload-subtext">Maximum file size: 100MB</div>
+            <input type="file" id="fileInput" accept=".mp3,.wav,.m4a,.flac,.ogg,.mp4" />
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <button class="btn" id="uploadBtn" style="display: none;">
+            🚀 Start Transcription
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p style="margin-top: 10px; color: #666;">Processing your audio file...</p>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <div class="download-section" id="downloadSection">
+            <h3>✅ Transcription Complete!</h3>
+            <p style="margin: 15px 0; color: #666;">Your audio has been successfully transcribed with timestamps.</p>
+            <a href="#" class="btn" id="downloadBtn">📥 Download Transcript</a>
+            <button class="btn" id="newFileBtn" style="background: #28a745;">🔄 Transcribe Another File</button>
+        </div>
+
+        <div class="supported-formats">
+            <h3>Supported Audio Formats</h3>
+            <div class="format-list">
+                <span class="format-tag">MP3</span>
+                <span class="format-tag">WAV</span>
+                <span class="format-tag">M4A</span>
+                <span class="format-tag">MP4</span>
+                <span class="format-tag">FLAC</span>
+                <span class="format-tag">OGG</span>
+            </div>
+        </div>
+    </div>
+
+        <div class="container" style="margin-top: 40px;">
+            <h1>🗣️ Text-to-Speech</h1>
+            <p class="subtitle">Convert your text into high-quality audio using OpenAI's latest models</p>
+
+            <textarea id="ttsInput" placeholder="Enter text to convert to speech..." style="width: 100%; height: 150px; padding: 15px; border-radius: 10px; border: 1px solid #ddd; font-size: 1em; margin-bottom: 20px;"></textarea>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="voiceSelect">Voice:</label>
+                    <select id="voiceSelect" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                        <option value="alloy">Alloy</option>
+                        <option value="echo">Echo</option>
+                        <option value="fable">Fable</option>
+                        <option value="onyx">Onyx</option>
+                        <option value="nova">Nova</option>
+                        <option value="shimmer">Shimmer</option>
+                    </select>
+                    <button class="btn" id="previewVoiceBtn" style="padding: 10px 15px; font-size: 0.9em;">▶️ Preview</button>
+                </div>
+                <div>
+                    <label for="ttsFileInput" class="btn" style="padding: 10px 15px;">
+                        📤 Upload .txt file
+                    </label>
+                    <input type="file" id="ttsFileInput" accept=".txt" style="display: none;">
+                </div>
+            </div>
+
+            <button class="btn" id="generateAudioBtn">
+                🎧 Generate Audio
+            </button>
+
+            <div id="ttsProgressContainer" class="progress-container">
+                <div class="progress-bar">
+                    <div id="ttsProgressFill" class="progress-fill"></div>
+                </div>
+                <p style="margin-top: 10px; color: #666;">Generating audio...</p>
+            </div>
+
+            <div id="ttsStatusMessage" class="status-message"></div>
+
+            <div id="audioPlayerContainer" style="display: none; margin-top: 30px;">
+                <h3>✅ Audio Generated Successfully!</h3>
+                <audio id="audioPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
+                <a href="#" class="btn" id="downloadAudioBtn" style="margin-top: 15px;" download>📥 Download Audio</a>
+            </div>
+        </div>
+
+        <div class="container" style="margin-top: 40px;">
+            <h1>🖼️ Image Generation</h1>
+            <p class="subtitle">Create stunning images from text prompts with DALL-E</p>
+
+            <textarea id="imagePrompt" placeholder="Enter a detailed description of the image you want to create..." style="width: 100%; height: 100px; padding: 15px; border-radius: 10px; border: 1px solid #ddd; font-size: 1em; margin-bottom: 20px;"></textarea>
+
+            <button class="btn" id="generateImageBtn">
+                🎨 Generate Image
+            </button>
+
+            <div id="imageProgressContainer" class="progress-container">
+                <div class="progress-bar">
+                    <div id="imageProgressFill" class="progress-fill"></div>
+                </div>
+                <p style="margin-top: 10px; color: #666;">Generating your image...</p>
+            </div>
+
+            <div id="imageStatusMessage" class="status-message"></div>
+
+            <div id="imageResultContainer" style="display: none; margin-top: 30px;">
+                <h3>✅ Image Generated!</h3>
+                <img id="generatedImage" src="" alt="Generated Image" style="max-width: 100%; border-radius: 15px; margin-top: 15px;">
+                <a href="#" class="btn" id="downloadImageBtn" style="margin-top: 15px;" download>📥 Download Image</a>
+            </div>
+        </div>
+
+        <div class="container" style="margin-top: 40px;">
+            <h1>🤖 AI Chat</h1>
+            <p class="subtitle">Chat with a helpful AI assistant powered by GPT</p>
+
+            <div id="chatWindow" style="height: 400px; border: 1px solid #ddd; border-radius: 10px; padding: 20px; overflow-y: auto; margin-bottom: 20px; text-align: left; display: flex; flex-direction: column;"></div>
+
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="chatInput" placeholder="Type your message..." style="flex-grow: 1; padding: 15px; border-radius: 10px; border: 1px solid #ddd; font-size: 1em;">
+                <button class="btn" id="sendChatBtn">➡️</button>
+            </div>
+        </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const statusMessage = document.getElementById('statusMessage');
+        const downloadSection = document.getElementById('downloadSection');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newFileBtn = document.getElementById('newFileBtn');
+
+        // TTS elements
+        const ttsInput = document.getElementById('ttsInput');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const previewVoiceBtn = document.getElementById('previewVoiceBtn');
+        const ttsFileInput = document.getElementById('ttsFileInput');
+        const generateAudioBtn = document.getElementById('generateAudioBtn');
+        const ttsProgressContainer = document.getElementById('ttsProgressContainer');
+        const ttsProgressFill = document.getElementById('ttsProgressFill');
+        const ttsStatusMessage = document.getElementById('ttsStatusMessage');
+        const audioPlayerContainer = document.getElementById('audioPlayerContainer');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+
+        // Image Generation elements
+        const imagePrompt = document.getElementById('imagePrompt');
+        const generateImageBtn = document.getElementById('generateImageBtn');
+        const imageProgressContainer = document.getElementById('imageProgressContainer');
+        const imageProgressFill = document.getElementById('imageProgressFill');
+        const imageStatusMessage = document.getElementById('imageStatusMessage');
+        const imageResultContainer = document.getElementById('imageResultContainer');
+        const generatedImage = document.getElementById('generatedImage');
+        const downloadImageBtn = document.getElementById('downloadImageBtn');
+
+        // Chat elements
+        const chatWindow = document.getElementById('chatWindow');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+
+        let selectedFile = null;
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            
+            // Show file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+            uploadBtn.style.display = 'inline-block';
+            
+            // Hide other sections
+            downloadSection.style.display = 'none';
+            hideStatus();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Upload button click
+        uploadBtn.addEventListener('click', () => {
+            if (selectedFile) {
+                uploadFile(selectedFile);
+            }
+        });
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show progress
+            progressContainer.style.display = 'block';
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '⏳ Processing...';
+            hideStatus();
+
+            // Initialize progress
+            progressFill.style.width = '0%';
+            updateProgressText('Uploading file...');
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Start polling for status updates
+                    pollProcessingStatus(data.transcript_id, data.status_url);
+                } else {
+                    progressContainer.style.display = 'none';
+                    showStatus(data.error || 'Upload failed', 'error');
+                    resetUploadButton();
+                }
+            })
+            .catch(error => {
+                progressContainer.style.display = 'none';
+                showStatus('Upload failed: ' + error.message, 'error');
+                resetUploadButton();
+            });
+        }
+
+        function pollProcessingStatus(transcriptId, statusUrl) {
+            fetch(statusUrl)
+            .then(response => response.json())
+            .then(status => {
+                // Update progress bar
+                progressFill.style.width = status.progress + '%';
+                
+                // Update progress text with detailed message
+                updateProgressText(status.message || 'Processing...');
+                
+                if (status.status === 'completed') {
+                    // Processing completed successfully
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        showStatus('Transcription completed successfully!', 'success');
+                        downloadBtn.href = status.download_url;
+                        downloadSection.style.display = 'block';
+                        resetUploadButton();
+                    }, 1000);
+                } else if (status.status === 'error') {
+                    // Processing failed
+                    progressContainer.style.display = 'none';
+                    showStatus(status.message || 'Processing failed', 'error');
+                    resetUploadButton();
+                } else {
+                    // Still processing, poll again
+                    setTimeout(() => pollProcessingStatus(transcriptId, statusUrl), 2000);
+                }
+            })
+            .catch(error => {
+                // If polling fails, try again
+                setTimeout(() => pollProcessingStatus(transcriptId, statusUrl), 3000);
+            });
+        }
+
+        function updateProgressText(message) {
+            const progressText = document.querySelector('.progress-container p');
+            if (progressText) {
+                progressText.textContent = message;
+            }
+        }
+
+        function resetUploadButton() {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '🚀 Start Transcription';
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message status-' + type;
+            statusMessage.style.display = 'block';
+        }
+
+        function hideStatus() {
+            statusMessage.style.display = 'none';
+        }
+
+        // New file button
+        newFileBtn.addEventListener('click', () => {
+            // Reset everything
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadBtn.style.display = 'none';
+            downloadSection.style.display = 'none';
+            progressContainer.style.display = 'none';
+            hideStatus();
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = '🚀 Start Transcription';
+        });
+
+        // TTS functionality
+        previewVoiceBtn.addEventListener('click', () => {
+            const voice = voiceSelect.value;
+            const previewText = `Hello, this is the ${voice} voice. You can use it to convert your text to speech.`;
+            generateAudio(previewText, voice, true);
+        });
+
+        ttsFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    ttsInput.value = event.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        generateAudioBtn.addEventListener('click', () => {
+            const text = ttsInput.value.trim();
+            const voice = voiceSelect.value;
+
+            if (!text) {
+                showTtsStatus('Please enter some text to generate audio.', 'error');
+                return;
+            }
+
+            generateAudio(text, voice, false);
+        });
+
+        function generateAudio(text, voice, isPreview) {
+            if (isPreview) {
+                previewVoiceBtn.disabled = true;
+                previewVoiceBtn.innerHTML = '⏳';
+            } else {
+                generateAudioBtn.disabled = true;
+                generateAudioBtn.textContent = '⏳ Generating...';
+                ttsProgressContainer.style.display = 'block';
+                ttsProgressFill.style.width = '0%';
+                hideTtsStatus();
+            }
+
+            fetch('/text-to-speech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text, voice: voice })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error) });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const audioUrl = URL.createObjectURL(blob);
+                if (isPreview) {
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                    audio.onended = () => {
+                        previewVoiceBtn.disabled = false;
+                        previewVoiceBtn.innerHTML = '▶️ Preview';
+                    };
+                } else {
+                    audioPlayer.src = audioUrl;
+                    downloadAudioBtn.href = audioUrl;
+                    downloadAudioBtn.download = 'generated_audio.mp3';
+                    audioPlayerContainer.style.display = 'block';
+                    ttsProgressContainer.style.display = 'none';
+                    generateAudioBtn.disabled = false;
+                    generateAudioBtn.textContent = '🎧 Generate Audio';
+                }
+            })
+            .catch(error => {
+                if (isPreview) {
+                    previewVoiceBtn.disabled = false;
+                    previewVoiceBtn.innerHTML = '▶️ Preview';
+                } else {
+                    ttsProgressContainer.style.display = 'none';
+                    generateAudioBtn.disabled = false;
+                    generateAudioBtn.textContent = '🎧 Generate Audio';
+                }
+                showTtsStatus('Audio generation failed: ' + error.message, 'error');
+            });
+        }
+
+        function showTtsStatus(message, type) {
+            ttsStatusMessage.textContent = message;
+            ttsStatusMessage.className = 'status-message status-' + type;
+            ttsStatusMessage.style.display = 'block';
+        }
+
+        function hideTtsStatus() {
+            ttsStatusMessage.style.display = 'none';
+        }
+
+        // Image Generation functionality
+        generateImageBtn.addEventListener('click', () => {
+            const prompt = imagePrompt.value.trim();
+            if (!prompt) {
+                showImageStatus('Please enter a prompt to generate an image.', 'error');
+                return;
+            }
+            
+            generateImageBtn.disabled = true;
+            generateImageBtn.textContent = '⏳ Generating...';
+            imageProgressContainer.style.display = 'block';
+            imageProgressFill.style.width = '0%';
+            hideImageStatus();
+            imageResultContainer.style.display = 'none';
+
+            fetch('/generate-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt: prompt })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                generatedImage.src = data.image_url;
+                downloadImageBtn.href = data.image_url;
+                downloadImageBtn.download = 'generated_image.png';
+                imageResultContainer.style.display = 'block';
+            })
+            .catch(error => {
+                showImageStatus('Image generation failed: ' + error.message, 'error');
+            })
+            .finally(() => {
+                generateImageBtn.disabled = false;
+                generateImageBtn.textContent = '🎨 Generate Image';
+                imageProgressContainer.style.display = 'none';
+            });
+        });
+
+        function showImageStatus(message, type) {
+            imageStatusMessage.textContent = message;
+            imageStatusMessage.className = 'status-message status-' + type;
+            imageStatusMessage.style.display = 'block';
+        }
+
+        function hideImageStatus() {
+            imageStatusMessage.style.display = 'none';
+        }
+
+        // Chat functionality
+        let conversationHistory = [];
+
+        sendChatBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            appendMessage(message, 'user');
+            conversationHistory.push({role: 'user', content: message});
+            chatInput.value = '';
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ history: conversationHistory })
+            })
+            .then(response => response.json())
+            .then(data => {
+                appendMessage(data.reply, 'assistant');
+                conversationHistory.push({role: 'assistant', content: data.reply});
+            })
+            .catch(error => {
+                appendMessage('Sorry, something went wrong.', 'assistant');
+            });
+        }
+
+        function appendMessage(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.style.marginBottom = '10px';
+            messageElement.style.padding = '10px 15px';
+            messageElement.style.borderRadius = '20px';
+            messageElement.style.maxWidth = '80%';
+
+            if (sender === 'user') {
+                messageElement.style.backgroundColor = '#667eea';
+                messageElement.style.color = 'white';
+                messageElement.style.alignSelf = 'flex-end';
+                messageElement.style.borderBottomRightRadius = '5px';
+            } else {
+                messageElement.style.backgroundColor = '#f1f0f0';
+                messageElement.style.color = '#333';
+                messageElement.style.alignSelf = 'flex-start';
+                messageElement.style.borderBottomLeftRadius = '5px';
+            }
+
+            messageElement.textContent = message;
+            chatWindow.appendChild(messageElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    </script>
+</body>
+</html>

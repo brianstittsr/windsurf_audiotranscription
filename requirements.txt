@@ -1,0 +1,7 @@
+Flask==2.3.3
+openai==1.51.0
+Werkzeug==2.3.7
+python-dotenv==1.0.0
+pydub==0.25.1  # For audio processing and M4A to MP3 conversion
+ffmpeg-python==0.2.0  # For advanced audio processing
+requests==2.31.0  # For direct HTTP API calls
