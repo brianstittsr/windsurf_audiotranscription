@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-Speech Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-bar a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-bar a:hover {
+            color: #764ba2;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 1em;
+            margin-bottom: 20px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .voice-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .voice-select-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1em;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-small {
+            padding: 10px 15px;
+            font-size: 0.9em;
+        }
+
+        .btn-secondary {
+            background: #28a745;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .status-message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .audio-player-container {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9ff;
+            border-radius: 15px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .file-upload-label {
+            display: inline-block;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/">← Back to Home</a>
+        <a href="/pricing">Pricing</a>
+    </div>
+
+    <div class="container">
+        <h1>🗣️ Text-to-Speech</h1>
+        <p class="subtitle">Convert your text into high-quality audio using OpenAI's latest models</p>
+
+        <textarea id="ttsInput" placeholder="Enter text to convert to speech..."></textarea>
+
+        <div class="voice-controls">
+            <div class="voice-select-group">
+                <label for="voiceSelect">Voice:</label>
+                <select id="voiceSelect">
+                    <option value="alloy">Alloy</option>
+                    <option value="echo">Echo</option>
+                    <option value="fable">Fable</option>
+                    <option value="onyx">Onyx</option>
+                    <option value="nova">Nova</option>
+                    <option value="shimmer">Shimmer</option>
+                </select>
+                <button class="btn btn-small" id="previewVoiceBtn">▶️ Preview</button>
+            </div>
+            <div>
+                <label for="ttsFileInput" class="btn btn-small file-upload-label">
+                    📤 Upload .txt file
+                </label>
+                <input type="file" id="ttsFileInput" accept=".txt">
+            </div>
+        </div>
+
+        <button class="btn" id="generateAudioBtn">
+            🎧 Generate Audio
+        </button>
+
+        <div class="progress-container" id="ttsProgressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="ttsProgressFill"></div>
+            </div>
+            <p style="margin-top: 10px; color: #666;">Generating audio...</p>
+        </div>
+
+        <div class="status-message" id="ttsStatusMessage"></div>
+
+        <div class="audio-player-container" id="audioPlayerContainer">
+            <h3>✅ Audio Generated Successfully!</h3>
+            <audio id="audioPlayer" controls></audio>
+            <a href="#" class="btn" id="downloadAudioBtn" style="margin-top: 15px;" download>📥 Download Audio</a>
+        </div>
+    </div>
+
+    <script>
+        const ttsInput = document.getElementById('ttsInput');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const previewVoiceBtn = document.getElementById('previewVoiceBtn');
+        const ttsFileInput = document.getElementById('ttsFileInput');
+        const generateAudioBtn = document.getElementById('generateAudioBtn');
+        const ttsProgressContainer = document.getElementById('ttsProgressContainer');
+        const ttsProgressFill = document.getElementById('ttsProgressFill');
+        const ttsStatusMessage = document.getElementById('ttsStatusMessage');
+        const audioPlayerContainer = document.getElementById('audioPlayerContainer');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+
+        // File upload handler
+        ttsFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    ttsInput.value = event.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Preview voice
+        previewVoiceBtn.addEventListener('click', () => {
+            const voice = voiceSelect.value;
+            const previewText = "Hello! This is a preview of the " + voice + " voice.";
+            
+            generateAudio(previewText, voice, true);
+        });
+
+        // Generate audio
+        generateAudioBtn.addEventListener('click', () => {
+            const text = ttsInput.value.trim();
+            if (!text) {
+                showTtsStatus('Please enter some text to convert to speech.', 'error');
+                return;
+            }
+            
+            const voice = voiceSelect.value;
+            generateAudio(text, voice, false);
+        });
+
+        function generateAudio(text, voice, isPreview) {
+            generateAudioBtn.disabled = true;
+            generateAudioBtn.textContent = '⏳ Generating...';
+            ttsProgressContainer.style.display = 'block';
+            ttsProgressFill.style.width = '0%';
+            hideTtsStatus();
+            audioPlayerContainer.style.display = 'none';
+
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                ttsProgressFill.style.width = progress + '%';
+                if (progress >= 90) clearInterval(progressInterval);
+            }, 200);
+
+            fetch('/text-to-speech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text, voice: voice })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error) });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                clearInterval(progressInterval);
+                ttsProgressFill.style.width = '100%';
+                
+                const audioUrl = URL.createObjectURL(blob);
+                audioPlayer.src = audioUrl;
+                downloadAudioBtn.href = audioUrl;
+                downloadAudioBtn.download = 'generated_audio.mp3';
+                
+                audioPlayerContainer.style.display = 'block';
+                
+                if (isPreview) {
+                    audioPlayer.play();
+                }
+                
+                setTimeout(() => {
+                    ttsProgressContainer.style.display = 'none';
+                }, 1000);
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                ttsProgressContainer.style.display = 'none';
+                showTtsStatus('Audio generation failed: ' + error.message, 'error');
+            })
+            .finally(() => {
+                generateAudioBtn.disabled = false;
+                generateAudioBtn.textContent = '🎧 Generate Audio';
+            });
+        }
+
+        function showTtsStatus(message, type) {
+            ttsStatusMessage.textContent = message;
+            ttsStatusMessage.className = 'status-message status-' + type;
+            ttsStatusMessage.style.display = 'block';
+        }
+
+        function hideTtsStatus() {
+            ttsStatusMessage.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

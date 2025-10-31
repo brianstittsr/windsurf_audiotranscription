@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-bar a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-bar a:hover {
+            color: #764ba2;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            margin-top: 80px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 140px);
+            max-height: 700px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .chat-window {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background-color: #667eea;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+            margin-left: auto;
+        }
+
+        .assistant-message {
+            background-color: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 18px;
+            background-color: #e9ecef;
+            border-radius: 20px;
+            border-bottom-left-radius: 5px;
+            max-width: 80px;
+            align-self: flex-start;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #999;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .clear-chat-btn {
+            background: #dc3545;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .status-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/">← Back to Home</a>
+        <a href="/pricing">Pricing</a>
+    </div>
+
+    <div class="container">
+        <h1>🤖 AI Chat</h1>
+        <p class="subtitle">Chat with a helpful AI assistant powered by GPT</p>
+
+        <div class="chat-window" id="chatWindow">
+            <div class="welcome-message">
+                👋 Hello! I'm your AI assistant. How can I help you today?
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <div class="input-container">
+            <input type="text" id="chatInput" placeholder="Type your message..." />
+            <button class="btn" id="sendChatBtn">➡️</button>
+        </div>
+
+        <button class="btn clear-chat-btn" id="clearChatBtn">🗑️ Clear Chat</button>
+    </div>
+
+    <script>
+        const chatWindow = document.getElementById('chatWindow');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const statusMessage = document.getElementById('statusMessage');
+
+        let conversationHistory = [];
+
+        // Send message on button click
+        sendChatBtn.addEventListener('click', sendMessage);
+
+        // Send message on Enter key
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Clear chat
+        clearChatBtn.addEventListener('click', () => {
+            conversationHistory = [];
+            chatWindow.innerHTML = '<div class="welcome-message">👋 Hello! I\'m your AI assistant. How can I help you today?</div>';
+            hideStatus();
+        });
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            appendMessage(message, 'user');
+            conversationHistory.push({role: 'user', content: message});
+            chatInput.value = '';
+
+            // Show typing indicator
+            typingIndicator.classList.add('active');
+            chatWindow.appendChild(typingIndicator);
+            scrollToBottom();
+
+            // Disable input while processing
+            chatInput.disabled = true;
+            sendChatBtn.disabled = true;
+            hideStatus();
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ history: conversationHistory })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                typingIndicator.classList.remove('active');
+                appendMessage(data.reply, 'assistant');
+                conversationHistory.push({role: 'assistant', content: data.reply});
+            })
+            .catch(error => {
+                typingIndicator.classList.remove('active');
+                showStatus('Error: ' + error.message, 'error');
+                appendMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+            })
+            .finally(() => {
+                chatInput.disabled = false;
+                sendChatBtn.disabled = false;
+                chatInput.focus();
+            });
+        }
+
+        function appendMessage(message, sender) {
+            // Remove welcome message if it exists
+            const welcomeMsg = chatWindow.querySelector('.welcome-message');
+            if (welcomeMsg) {
+                welcomeMsg.remove();
+            }
+
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message ' + (sender === 'user' ? 'user-message' : 'assistant-message');
+            messageElement.textContent = message;
+            
+            chatWindow.appendChild(messageElement);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message status-' + type;
+            statusMessage.style.display = 'block';
+        }
+
+        function hideStatus() {
+            statusMessage.style.display = 'none';
+        }
+
+        // Focus input on load
+        chatInput.focus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-bar a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-bar a:hover {
+            color: #764ba2;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 1em;
+            margin-bottom: 20px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .status-message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .image-result-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .generated-image {
+            max-width: 100%;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .example-prompts {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .example-prompts h3 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .prompt-example {
+            background-color: white;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid #667eea;
+        }
+
+        .prompt-example:hover {
+            background-color: #f0f2ff;
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/">← Back to Home</a>
+        <a href="/pricing">Pricing</a>
+    </div>
+
+    <div class="container">
+        <h1>🖼️ Image Generation</h1>
+        <p class="subtitle">Create stunning images from text prompts with DALL-E</p>
+
+        <textarea id="imagePrompt" placeholder="Enter a detailed description of the image you want to create..."></textarea>
+
+        <button class="btn" id="generateImageBtn">
+            🎨 Generate Image
+        </button>
+
+        <div class="progress-container" id="imageProgressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="imageProgressFill"></div>
+            </div>
+            <p style="margin-top: 10px; color: #666;">Generating your image...</p>
+        </div>
+
+        <div class="status-message" id="imageStatusMessage"></div>
+
+        <div class="image-result-container" id="imageResultContainer">
+            <h3>✅ Image Generated!</h3>
+            <img id="generatedImage" src="" alt="Generated Image" class="generated-image">
+            <br>
+            <a href="#" class="btn" id="downloadImageBtn" download>📥 Download Image</a>
+            <button class="btn" id="newImageBtn" style="background: #28a745;">🔄 Generate Another</button>
+        </div>
+
+        <div class="example-prompts">
+            <h3>💡 Example Prompts</h3>
+            <div class="prompt-example" data-prompt="A serene landscape with mountains at sunset, digital art style">
+                🏔️ A serene landscape with mountains at sunset, digital art style
+            </div>
+            <div class="prompt-example" data-prompt="A futuristic city with flying cars and neon lights, cyberpunk aesthetic">
+                🌃 A futuristic city with flying cars and neon lights, cyberpunk aesthetic
+            </div>
+            <div class="prompt-example" data-prompt="A cute robot reading a book in a cozy library, cartoon style">
+                🤖 A cute robot reading a book in a cozy library, cartoon style
+            </div>
+            <div class="prompt-example" data-prompt="An abstract painting with vibrant colors and geometric shapes">
+                🎨 An abstract painting with vibrant colors and geometric shapes
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const imagePrompt = document.getElementById('imagePrompt');
+        const generateImageBtn = document.getElementById('generateImageBtn');
+        const imageProgressContainer = document.getElementById('imageProgressContainer');
+        const imageProgressFill = document.getElementById('imageProgressFill');
+        const imageStatusMessage = document.getElementById('imageStatusMessage');
+        const imageResultContainer = document.getElementById('imageResultContainer');
+        const generatedImage = document.getElementById('generatedImage');
+        const downloadImageBtn = document.getElementById('downloadImageBtn');
+        const newImageBtn = document.getElementById('newImageBtn');
+
+        // Example prompt click handlers
+        document.querySelectorAll('.prompt-example').forEach(example => {
+            example.addEventListener('click', function() {
+                imagePrompt.value = this.getAttribute('data-prompt');
+            });
+        });
+
+        // Generate image
+        generateImageBtn.addEventListener('click', () => {
+            const prompt = imagePrompt.value.trim();
+            if (!prompt) {
+                showImageStatus('Please enter a prompt to generate an image.', 'error');
+                return;
+            }
+            
+            generateImageBtn.disabled = true;
+            generateImageBtn.textContent = '⏳ Generating...';
+            imageProgressContainer.style.display = 'block';
+            imageProgressFill.style.width = '0%';
+            hideImageStatus();
+            imageResultContainer.style.display = 'none';
+
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                imageProgressFill.style.width = progress + '%';
+                if (progress >= 90) clearInterval(progressInterval);
+            }, 500);
+
+            fetch('/generate-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt: prompt })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                clearInterval(progressInterval);
+                imageProgressFill.style.width = '100%';
+                
+                generatedImage.src = data.image_url;
+                downloadImageBtn.href = data.image_url;
+                downloadImageBtn.download = 'generated_image.png';
+                imageResultContainer.style.display = 'block';
+                
+                setTimeout(() => {
+                    imageProgressContainer.style.display = 'none';
+                }, 1000);
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                imageProgressContainer.style.display = 'none';
+                showImageStatus('Image generation failed: ' + error.message, 'error');
+            })
+            .finally(() => {
+                generateImageBtn.disabled = false;
+                generateImageBtn.textContent = '🎨 Generate Image';
+            });
+        });
+
+        // New image button
+        newImageBtn.addEventListener('click', () => {
+            imagePrompt.value = '';
+            imageResultContainer.style.display = 'none';
+            hideImageStatus();
+        });
+
+        function showImageStatus(message, type) {
+            imageStatusMessage.textContent = message;
+            imageStatusMessage.className = 'status-message status-' + type;
+            imageStatusMessage.style.display = 'block';
+        }
+
+        function hideImageStatus() {
+            imageStatusMessage.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
