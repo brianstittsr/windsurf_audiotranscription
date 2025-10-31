@@ -134,6 +134,89 @@
             transform: scale(1.05);
         }
 
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading-text {
+            color: #333;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2em;
@@ -146,6 +229,17 @@
     </style>
 </head>
 <body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loadingText">Loading page...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🚀 AI Media Suite</h1>
@@ -210,5 +304,77 @@
             <a href="/pricing">💰 View Pricing</a>
         </div>
     </div>
+
+    <script>
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const progressFill = document.getElementById('progressFill');
+        const errorMessage = document.getElementById('errorMessage');
+        const productCards = document.querySelectorAll('.product-card');
+
+        // Add click handlers to all product cards
+        productCards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('href');
+                const productName = this.querySelector('h2').textContent;
+                
+                loadPage(url, productName);
+            });
+        });
+
+        function loadPage(url, productName) {
+            // Show loading overlay
+            loadingOverlay.classList.add('active');
+            loadingText.textContent = `Loading ${productName}...`;
+            errorMessage.classList.remove('show');
+            errorMessage.textContent = '';
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                progressFill.style.width = progress + '%';
+                
+                if (progress >= 90) {
+                    clearInterval(progressInterval);
+                }
+            }, 100);
+
+            // Attempt to navigate
+            fetch(url, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        // Page exists, complete progress and navigate
+                        progressFill.style.width = '100%';
+                        setTimeout(() => {
+                            window.location.href = url;
+                        }, 300);
+                    } else {
+                        throw new Error(`Page not found (${response.status})`);
+                    }
+                })
+                .catch(error => {
+                    clearInterval(progressInterval);
+                    progressFill.style.width = '0%';
+                    
+                    // Show error message
+                    errorMessage.textContent = `Error loading ${productName}: ${error.message}. The page may not be available yet.`;
+                    errorMessage.classList.add('show');
+                    loadingText.textContent = 'Failed to load page';
+                    
+                    // Hide overlay after 3 seconds
+                    setTimeout(() => {
+                        loadingOverlay.classList.remove('active');
+                    }, 3000);
+                });
+        }
+
+        // Handle pricing link separately
+        document.querySelector('.pricing-link a').addEventListener('click', function(e) {
+            e.preventDefault();
+            loadPage(this.getAttribute('href'), 'Pricing');
+        });
+    </script>
 </body>
 </html>
