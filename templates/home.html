@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Media Suite - Audio, Text, Image & Chat Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .product-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .product-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .product-card .features {
+            list-style: none;
+            margin: 20px 0;
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .product-card .features li {
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .pricing-link {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .pricing-link a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            padding: 15px 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-link a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AI Media Suite</h1>
+            <p>Powerful AI tools for audio, text, images, and conversations</p>
+        </div>
+
+        <div class="products-grid">
+            <a href="/transcription" class="product-card">
+                <div class="product-icon">🎵</div>
+                <h2>Audio Transcription</h2>
+                <p>Convert audio files to accurate text transcripts with timestamps</p>
+                <ul class="features">
+                    <li>✓ Multiple audio formats</li>
+                    <li>✓ Timestamp segments</li>
+                    <li>✓ Up to 100MB files</li>
+                    <li>✓ Powered by Whisper AI</li>
+                </ul>
+                <span class="btn">Try Now</span>
+            </a>
+
+            <a href="/text-to-speech" class="product-card">
+                <div class="product-icon">🗣️</div>
+                <h2>Text-to-Speech</h2>
+                <p>Transform your text into natural-sounding audio with multiple voices</p>
+                <ul class="features">
+                    <li>✓ 6 unique voices</li>
+                    <li>✓ Voice preview</li>
+                    <li>✓ File upload support</li>
+                    <li>✓ High-quality output</li>
+                </ul>
+                <span class="btn">Try Now</span>
+            </a>
+
+            <a href="/image-generation" class="product-card">
+                <div class="product-icon">🖼️</div>
+                <h2>Image Generation</h2>
+                <p>Create stunning images from text descriptions using DALL-E</p>
+                <ul class="features">
+                    <li>✓ AI-powered creation</li>
+                    <li>✓ High resolution</li>
+                    <li>✓ Instant generation</li>
+                    <li>✓ Download & share</li>
+                </ul>
+                <span class="btn">Try Now</span>
+            </a>
+
+            <a href="/ai-chat" class="product-card">
+                <div class="product-icon">🤖</div>
+                <h2>AI Chat</h2>
+                <p>Have intelligent conversations with an AI assistant powered by GPT</p>
+                <ul class="features">
+                    <li>✓ Natural conversations</li>
+                    <li>✓ Context awareness</li>
+                    <li>✓ Instant responses</li>
+                    <li>✓ Multi-turn dialogue</li>
+                </ul>
+                <span class="btn">Try Now</span>
+            </a>
+        </div>
+
+        <div class="pricing-link">
+            <a href="/pricing">💰 View Pricing</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -223,7 +223,27 @@ def convert_m4a_to_mp3(input_path, file_id=None):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('home.html')
+
+@app.route('/transcription')
+def transcription():
+    return render_template('transcription.html')
+
+@app.route('/text-to-speech-page')
+def text_to_speech_page():
+    return render_template('tts.html')
+
+@app.route('/image-generation')
+def image_generation_page():
+    return render_template('image_gen.html')
+
+@app.route('/ai-chat')
+def ai_chat_page():
+    return render_template('chat.html')
+
+@app.route('/all-features')
+def all_features():
+    return render_template('all-features.html')
 
 @app.route('/favicon.ico')
 def favicon():
@@ -1083,6 +1103,9 @@ def chat():
 
     except Exception as e:
         return jsonify({'error': f'Failed to get chat response: {str(e)}'}), 500
+
+# For Vercel deployment
+application = app
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
