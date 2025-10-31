@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Spanish to English Translator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-bar a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-bar a:hover {
+            color: #764ba2;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            margin: 100px auto 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            flex: 1;
+            max-width: 300px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .mode-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .mode-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .mode-btn h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .mode-btn p {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .translation-area {
+            display: none;
+        }
+
+        .translation-area.active {
+            display: block;
+        }
+
+        .audio-controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .record-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 2.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .record-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .record-btn.recording {
+            background: #dc3545;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .status-indicator {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status-indicator.active {
+            display: block;
+        }
+
+        .status-indicator.listening {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-indicator.processing {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-indicator.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .translation-output {
+            margin-top: 30px;
+            padding: 30px;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            min-height: 200px;
+        }
+
+        .translation-output h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .original-text {
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .original-text .label {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .original-text .content {
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .translated-text {
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #28a745;
+            border-radius: 8px;
+        }
+
+        .translated-text .label {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .translated-text .content {
+            font-size: 1.2em;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .audio-player-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .audio-player-section.active {
+            display: block;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-bar.active {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: progressPulse 2s infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .feature-note {
+            background-color: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+
+        .feature-note strong {
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/">← Back to Home</a>
+        <a href="/pricing">Pricing</a>
+    </div>
+
+    <div class="container">
+        <h1>🌐 Spanish to English Translator</h1>
+        <p class="subtitle">Real-time audio translation with text and voice output</p>
+
+        <div class="mode-selector">
+            <div class="mode-btn active" data-mode="text" id="textModeBtn">
+                <h3>📝 Text Mode</h3>
+                <p>Translate to English text displayed on screen</p>
+            </div>
+            <div class="mode-btn" data-mode="voice" id="voiceModeBtn">
+                <h3>🔊 Voice Mode</h3>
+                <p>Translate to English audio playback</p>
+            </div>
+        </div>
+
+        <div class="translation-area active" id="textMode">
+            <div class="audio-controls">
+                <button class="record-btn" id="recordBtnText">🎤</button>
+                <div class="status-indicator" id="statusText">Ready to record</div>
+                <div class="progress-bar" id="progressBarText">
+                    <div class="progress-fill" id="progressFillText"></div>
+                </div>
+            </div>
+
+            <div class="translation-output" id="outputText">
+                <div class="original-text">
+                    <div class="label">🇪🇸 Spanish (Original)</div>
+                    <div class="content" id="spanishText">Your Spanish audio will appear here...</div>
+                </div>
+                <div class="translated-text">
+                    <div class="label">🇺🇸 English (Translation)</div>
+                    <div class="content" id="englishText">English translation will appear here...</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" id="clearTextBtn">🗑️ Clear</button>
+                <button class="btn" id="copyTextBtn">📋 Copy Translation</button>
+            </div>
+        </div>
+
+        <div class="translation-area" id="voiceMode">
+            <div class="audio-controls">
+                <button class="record-btn" id="recordBtnVoice">🎤</button>
+                <div class="status-indicator" id="statusVoice">Ready to record</div>
+                <div class="progress-bar" id="progressBarVoice">
+                    <div class="progress-fill" id="progressFillVoice"></div>
+                </div>
+            </div>
+
+            <div class="translation-output" id="outputVoice">
+                <div class="original-text">
+                    <div class="label">🇪🇸 Spanish (Original)</div>
+                    <div class="content" id="spanishTextVoice">Your Spanish audio will appear here...</div>
+                </div>
+                <div class="translated-text">
+                    <div class="label">🇺🇸 English (Translation)</div>
+                    <div class="content" id="englishTextVoice">English translation will appear here...</div>
+                </div>
+
+                <div class="audio-player-section" id="audioPlayerSection">
+                    <h4>🔊 English Audio Translation</h4>
+                    <audio id="translatedAudio" controls></audio>
+                    <div style="margin-top: 10px;">
+                        <button class="btn" id="downloadAudioBtn">📥 Download Audio</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" id="clearVoiceBtn">🗑️ Clear</button>
+            </div>
+        </div>
+
+        <div class="feature-note">
+            <strong>💡 How it works:</strong> Click the microphone button and speak in Spanish. The app will transcribe your speech, translate it to English, and either display the text or generate audio playback based on your selected mode.
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'text';
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        const textModeBtn = document.getElementById('textModeBtn');
+        const voiceModeBtn = document.getElementById('voiceModeBtn');
+        const textModeArea = document.getElementById('textMode');
+        const voiceModeArea = document.getElementById('voiceMode');
+
+        // Mode switching
+        textModeBtn.addEventListener('click', () => switchMode('text'));
+        voiceModeBtn.addEventListener('click', () => switchMode('voice'));
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            if (mode === 'text') {
+                textModeBtn.classList.add('active');
+                voiceModeBtn.classList.remove('active');
+                textModeArea.classList.add('active');
+                voiceModeArea.classList.remove('active');
+            } else {
+                voiceModeBtn.classList.add('active');
+                textModeBtn.classList.remove('active');
+                voiceModeArea.classList.add('active');
+                textModeArea.classList.remove('active');
+            }
+        }
+
+        // Text Mode Recording
+        const recordBtnText = document.getElementById('recordBtnText');
+        const statusText = document.getElementById('statusText');
+        const progressBarText = document.getElementById('progressBarText');
+        const progressFillText = document.getElementById('progressFillText');
+        const spanishText = document.getElementById('spanishText');
+        const englishText = document.getElementById('englishText');
+
+        recordBtnText.addEventListener('click', () => handleRecording('text'));
+
+        // Voice Mode Recording
+        const recordBtnVoice = document.getElementById('recordBtnVoice');
+        const statusVoice = document.getElementById('statusVoice');
+        const progressBarVoice = document.getElementById('progressBarVoice');
+        const progressFillVoice = document.getElementById('progressFillVoice');
+        const spanishTextVoice = document.getElementById('spanishTextVoice');
+        const englishTextVoice = document.getElementById('englishTextVoice');
+        const audioPlayerSection = document.getElementById('audioPlayerSection');
+        const translatedAudio = document.getElementById('translatedAudio');
+        const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+
+        recordBtnVoice.addEventListener('click', () => handleRecording('voice'));
+
+        async function handleRecording(mode) {
+            const recordBtn = mode === 'text' ? recordBtnText : recordBtnVoice;
+            const status = mode === 'text' ? statusText : statusVoice;
+
+            if (!isRecording) {
+                // Start recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        processTranslation(audioBlob, mode);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.classList.add('recording');
+                    recordBtn.textContent = '⏹️';
+                    status.textContent = '🎙️ Recording... Click to stop';
+                    status.className = 'status-indicator active listening';
+                } catch (error) {
+                    status.textContent = '❌ Microphone access denied';
+                    status.className = 'status-indicator active error';
+                }
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                recordBtn.classList.remove('recording');
+                recordBtn.textContent = '🎤';
+                status.textContent = '⏳ Processing translation...';
+                status.className = 'status-indicator active processing';
+            }
+        }
+
+        async function processTranslation(audioBlob, mode) {
+            const progressBar = mode === 'text' ? progressBarText : progressBarVoice;
+            const progressFill = mode === 'text' ? progressFillText : progressFillVoice;
+            const status = mode === 'text' ? statusText : statusVoice;
+
+            progressBar.classList.add('active');
+            progressFill.style.width = '30%';
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+            formData.append('mode', mode);
+
+            try {
+                progressFill.style.width = '60%';
+                
+                const response = await fetch('/translate-spanish', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Translation failed');
+                }
+
+                const data = await response.json();
+                progressFill.style.width = '100%';
+
+                // Display results
+                if (mode === 'text') {
+                    spanishText.textContent = data.spanish_text;
+                    englishText.textContent = data.english_text;
+                    status.textContent = '✅ Translation complete!';
+                    status.className = 'status-indicator active listening';
+                } else {
+                    spanishTextVoice.textContent = data.spanish_text;
+                    englishTextVoice.textContent = data.english_text;
+                    
+                    // Load audio
+                    if (data.audio_url) {
+                        translatedAudio.src = data.audio_url;
+                        audioPlayerSection.classList.add('active');
+                        downloadAudioBtn.onclick = () => {
+                            const a = document.createElement('a');
+                            a.href = data.audio_url;
+                            a.download = 'translation.mp3';
+                            a.click();
+                        };
+                        translatedAudio.play();
+                    }
+                    
+                    status.textContent = '✅ Translation complete!';
+                    status.className = 'status-indicator active listening';
+                }
+
+                setTimeout(() => {
+                    progressBar.classList.remove('active');
+                    progressFill.style.width = '0%';
+                }, 2000);
+
+            } catch (error) {
+                status.textContent = '❌ Translation failed: ' + error.message;
+                status.className = 'status-indicator active error';
+                progressBar.classList.remove('active');
+                progressFill.style.width = '0%';
+            }
+        }
+
+        // Clear buttons
+        document.getElementById('clearTextBtn').addEventListener('click', () => {
+            spanishText.textContent = 'Your Spanish audio will appear here...';
+            englishText.textContent = 'English translation will appear here...';
+            statusText.textContent = 'Ready to record';
+            statusText.className = 'status-indicator';
+        });
+
+        document.getElementById('clearVoiceBtn').addEventListener('click', () => {
+            spanishTextVoice.textContent = 'Your Spanish audio will appear here...';
+            englishTextVoice.textContent = 'English translation will appear here...';
+            audioPlayerSection.classList.remove('active');
+            statusVoice.textContent = 'Ready to record';
+            statusVoice.className = 'status-indicator';
+        });
+
+        // Copy button
+        document.getElementById('copyTextBtn').addEventListener('click', () => {
+            const text = englishText.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Translation copied to clipboard!');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Headshot Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-bar a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-bar a:hover {
+            color: #764ba2;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background-color: #f0f2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #ddd;
+            margin-bottom: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            color: #667eea;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .image-preview.active {
+            display: block;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .style-options {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .style-options h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .style-option {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .style-option:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .style-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .style-option .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .style-option .name {
+            font-weight: 600;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 30px 0;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .status-message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-message.active {
+            display: block;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .comparison-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .image-container {
+            text-align: center;
+        }
+
+        .image-container h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .result-image {
+            max-width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .comparison-view {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .feature-note {
+            background-color: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .feature-note strong {
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/">← Back to Home</a>
+        <a href="/pricing">Pricing</a>
+    </div>
+
+    <div class="container">
+        <h1>📸 AI Headshot Generator</h1>
+        <p class="subtitle">Transform your photo into a professional headshot with AI</p>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text">Click to upload or drag & drop your photo</div>
+                <div class="upload-subtext">Supported formats: JPG, PNG, WEBP (Max 10MB)</div>
+                <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" />
+            </div>
+
+            <div class="image-preview" id="imagePreview">
+                <h4>Original Photo</h4>
+                <img id="previewImage" class="preview-image" src="" alt="Preview">
+            </div>
+        </div>
+
+        <div class="style-options">
+            <h3>Choose Headshot Style</h3>
+            <div class="style-grid">
+                <div class="style-option selected" data-style="professional">
+                    <div class="icon">👔</div>
+                    <div class="name">Professional</div>
+                </div>
+                <div class="style-option" data-style="corporate">
+                    <div class="icon">💼</div>
+                    <div class="name">Corporate</div>
+                </div>
+                <div class="style-option" data-style="creative">
+                    <div class="icon">🎨</div>
+                    <div class="name">Creative</div>
+                </div>
+                <div class="style-option" data-style="casual">
+                    <div class="icon">👕</div>
+                    <div class="name">Casual</div>
+                </div>
+                <div class="style-option" data-style="linkedin">
+                    <div class="icon">💻</div>
+                    <div class="name">LinkedIn</div>
+                </div>
+                <div class="style-option" data-style="executive">
+                    <div class="icon">🏆</div>
+                    <div class="name">Executive</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn" id="generateBtn" disabled>
+            ✨ Generate Headshot
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p style="margin-top: 10px; color: #666;">Creating your professional headshot...</p>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <div class="result-section" id="resultSection">
+            <h3>✅ Your Professional Headshot is Ready!</h3>
+            <div class="comparison-view">
+                <div class="image-container">
+                    <h4>Original</h4>
+                    <img id="originalImage" class="result-image" src="" alt="Original">
+                </div>
+                <div class="image-container">
+                    <h4>AI Headshot</h4>
+                    <img id="headshotImage" class="result-image" src="" alt="Headshot">
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <a href="#" class="btn" id="downloadBtn" download>📥 Download Headshot</a>
+                <button class="btn" id="newPhotoBtn" style="background: #28a745;">🔄 Try Another Photo</button>
+            </div>
+        </div>
+
+        <div class="feature-note">
+            <strong>💡 Tips for best results:</strong>
+            <ul style="margin-top: 10px; margin-left: 20px;">
+                <li>Use a clear, well-lit photo of your face</li>
+                <li>Face the camera directly for best results</li>
+                <li>Avoid sunglasses or face coverings</li>
+                <li>Higher resolution photos produce better headshots</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const generateBtn = document.getElementById('generateBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultSection = document.getElementById('resultSection');
+        const originalImage = document.getElementById('originalImage');
+        const headshotImage = document.getElementById('headshotImage');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newPhotoBtn = document.getElementById('newPhotoBtn');
+        const styleOptions = document.querySelectorAll('.style-option');
+
+        let selectedFile = null;
+        let selectedStyle = 'professional';
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.type.match('image.*')) {
+                showStatus('Please select an image file', 'error');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                showStatus('File size must be less than 10MB', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                imagePreview.classList.add('active');
+                generateBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+
+            resultSection.classList.remove('active');
+            hideStatus();
+        }
+
+        // Style selection
+        styleOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                styleOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedStyle = this.getAttribute('data-style');
+            });
+        });
+
+        // Generate headshot
+        generateBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                showStatus('Please upload a photo first', 'error');
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ Generating...';
+            progressContainer.classList.add('active');
+            progressFill.style.width = '0%';
+            hideStatus();
+            resultSection.classList.remove('active');
+
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                progressFill.style.width = progress + '%';
+                if (progress >= 90) clearInterval(progressInterval);
+            }, 300);
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+            formData.append('style', selectedStyle);
+
+            try {
+                const response = await fetch('/generate-headshot', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Generation failed');
+                }
+
+                const data = await response.json();
+                
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+
+                // Display results
+                originalImage.src = previewImage.src;
+                headshotImage.src = data.headshot_url;
+                downloadBtn.href = data.headshot_url;
+                downloadBtn.download = 'professional_headshot.png';
+                
+                resultSection.classList.add('active');
+                
+                setTimeout(() => {
+                    progressContainer.classList.remove('active');
+                    progressFill.style.width = '0%';
+                }, 1000);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                progressContainer.classList.remove('active');
+                showStatus('Headshot generation failed: ' + error.message, 'error');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '✨ Generate Headshot';
+            }
+        });
+
+        // New photo button
+        newPhotoBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            imagePreview.classList.remove('active');
+            resultSection.classList.remove('active');
+            generateBtn.disabled = true;
+            hideStatus();
+        });
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message active status-' + type;
+        }
+
+        function hideStatus() {
+            statusMessage.className = 'status-message';
+        }
+    </script>
+</body>
+</html>

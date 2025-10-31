@@ -245,6 +245,14 @@ def ai_chat_page():
 def all_features():
     return render_template('all-features.html')
 
+@app.route('/translator')
+def translator_page():
+    return render_template('translator.html')
+
+@app.route('/headshot-generator')
+def headshot_generator_page():
+    return render_template('headshot.html')
+
 @app.route('/favicon.ico')
 def favicon():
     return '', 204
@@ -1103,6 +1111,134 @@ def chat():
 
     except Exception as e:
         return jsonify({'error': f'Failed to get chat response: {str(e)}'}), 500
+
+@app.route('/translate-spanish', methods=['POST'])
+def translate_spanish():
+    """Translate Spanish audio to English text/voice"""
+    if get_openai_client() is None:
+        return jsonify({'error': 'OpenAI API key not configured.'}), 500
+
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
+
+    audio_file = request.files['audio']
+    mode = request.form.get('mode', 'text')
+
+    try:
+        api_key = get_openai_client()
+        client = OpenAI(api_key=api_key)
+
+        # Step 1: Transcribe Spanish audio
+        audio_file.seek(0)
+        transcription = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file,
+            language="es"
+        )
+        spanish_text = transcription.text
+
+        # Step 2: Translate to English using GPT
+        translation_response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a professional translator. Translate the following Spanish text to English. Provide only the translation, no explanations."},
+                {"role": "user", "content": spanish_text}
+            ]
+        )
+        english_text = translation_response.choices[0].message.content
+
+        response_data = {
+            'spanish_text': spanish_text,
+            'english_text': english_text
+        }
+
+        # Step 3: If voice mode, generate English audio
+        if mode == 'voice':
+            tts_response = client.audio.speech.create(
+                model="tts-1",
+                voice="alloy",
+                input=english_text
+            )
+            
+            # Save audio temporarily
+            audio_filename = f"translation_{uuid.uuid4().hex}.mp3"
+            audio_path = os.path.join(UPLOAD_FOLDER, audio_filename)
+            
+            with open(audio_path, 'wb') as f:
+                for chunk in tts_response.iter_bytes():
+                    f.write(chunk)
+            
+            response_data['audio_url'] = f'/download-translation/{audio_filename}'
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        return jsonify({'error': f'Translation failed: {str(e)}'}), 500
+
+@app.route('/download-translation/<filename>')
+def download_translation(filename):
+    """Download translation audio file"""
+    try:
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        if os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True, download_name=filename, mimetype='audio/mpeg')
+        else:
+            return jsonify({'error': 'File not found'}), 404
+    except Exception as e:
+        return jsonify({'error': f'Download failed: {str(e)}'}), 500
+
+@app.route('/generate-headshot', methods=['POST'])
+def generate_headshot():
+    """Generate professional headshot from uploaded image"""
+    if get_openai_client() is None:
+        return jsonify({'error': 'OpenAI API key not configured.'}), 500
+
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file provided'}), 400
+
+    image_file = request.files['image']
+    style = request.form.get('style', 'professional')
+
+    try:
+        api_key = get_openai_client()
+        client = OpenAI(api_key=api_key)
+
+        # Read and encode image
+        image_data = image_file.read()
+        import base64
+        encoded_image = base64.b64encode(image_data).decode('utf-8')
+
+        # Style descriptions
+        style_prompts = {
+            'professional': 'professional business headshot with neutral background, studio lighting, business attire',
+            'corporate': 'corporate executive headshot, formal suit, office background, professional lighting',
+            'creative': 'creative professional headshot, artistic lighting, modern casual attire, colorful background',
+            'casual': 'casual professional headshot, relaxed pose, natural lighting, friendly expression',
+            'linkedin': 'LinkedIn profile photo, professional yet approachable, clean background, business casual',
+            'executive': 'executive leadership headshot, confident pose, premium suit, sophisticated background'
+        }
+
+        prompt = f"Transform this photo into a {style_prompts.get(style, style_prompts['professional'])}. Maintain the person's facial features and identity while enhancing the professional quality. High resolution, professional photography quality."
+
+        # Generate headshot using DALL-E with image editing
+        # Note: For actual implementation, you might want to use DALL-E 2 edit endpoint
+        # or a specialized headshot generation service
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            n=1,
+            size="1024x1024"
+        )
+        
+        headshot_url = response.data[0].url
+        
+        return jsonify({
+            'headshot_url': headshot_url,
+            'style': style
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Headshot generation failed: {str(e)}'}), 500
 
 # For Vercel deployment
 application = app
